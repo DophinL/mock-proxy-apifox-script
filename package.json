@@ -1,5 +1,5 @@
 {
-  "name": "@mock-proxy/apifox-script",
+  "name": "mock-proxy-apifox-script",
   "version": "1.0.0",
   "description": "mock proxy apifox脚本",
   "dependencies": {

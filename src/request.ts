@@ -57,7 +57,7 @@ export const getProject: userScript.GetProjectRequest<{
 
   return context
     .fetchJSON<ApifoxOriginalQueryProjectResponse>(
-      `api/v1/api-tree-list?locale=zh-CN`,
+      `${ApifoxBaseUrl}/api/v1/api-tree-list?locale=zh-CN`,
       {
         headers: {
           "X-Project-Id": `${projectConfig.id}`,
