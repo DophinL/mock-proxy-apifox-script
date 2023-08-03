@@ -34,6 +34,8 @@ interface RequestMap {
 interface ApifoxProjectConfig extends ProjectConfig {
   requestMap?: RequestMap;
   mockPrefixUrl?: string;
+  bearerToken?: string;
+  clientVersion?: string;
 }
 
 interface ApifoxOverviewApiResponse extends OverviewApiResponse {
@@ -61,6 +63,8 @@ export const getProject: userScript.GetProjectRequest<{
       {
         headers: {
           "X-Project-Id": `${projectConfig.id}`,
+          Authorization: projectConfig?.bearerToken!,
+          "X-Client-Version": projectConfig?.clientVersion!,
         },
       }
     )
@@ -137,42 +141,43 @@ export const getApi: userScript.GetApiRequest<
 > = async (params, context) => {
   const { projectConfig, overviewApiResponse } = params;
 
-  const mocks = await context
-  .fetchJSON<ApifoxOriginalQueryApiScenesResponse>(
+  const mocks = await context.fetchJSON<ApifoxOriginalQueryApiScenesResponse>(
     `${ApifoxBaseUrl}/api/v1/api-mocks?locale=zh-CN`
   );
 
-  const scenes: SceneResponse[] = mocks.data.filter((mock) => {
-   return mock.apiDetailId === overviewApiResponse.id;
-  }).map((mock) => {
-    return {
-      id: mock.id,
-      name: mock.name,
-      mockUrl: `${projectConfig?.mockPrefixUrl}/${overviewApiResponse.path}`,
-      mockData: JSON.parse(mock.response.bodyData),
-    }
-  });
+  const scenes: SceneResponse[] = mocks.data
+    .filter((mock) => {
+      return mock.apiDetailId === overviewApiResponse.id;
+    })
+    .map((mock) => {
+      return {
+        id: mock.id,
+        name: mock.name,
+        mockUrl: `${projectConfig?.mockPrefixUrl}/${overviewApiResponse.path}`,
+        mockData: JSON.parse(mock.response.bodyData),
+      };
+    });
 
   const realPath =
-        projectConfig.requestMap?.[overviewApiResponse.url] ||
-        overviewApiResponse.url;
+    projectConfig.requestMap?.[overviewApiResponse.url] ||
+    overviewApiResponse.url;
 
-      const ret: ApifoxApiResponse = {
-        id: overviewApiResponse.id,
-        name: overviewApiResponse.name,
-        // desc: res.content.description,
-        method: overviewApiResponse.method,
-        path: overviewApiResponse.url,
-        realPath,
-        // TODO: 待补充
-        creator: `${overviewApiResponse.creatorId}`,
-        mockUrl: `${projectConfig?.mockPrefixUrl}/${overviewApiResponse.path}`,
-        sourceUrl: `${ApifoxBaseUrl}/project/${projectConfig?.id}/apis/api-${overviewApiResponse?.id}`,
-        mockData: scenes[0]?.mockData || {},
-        scenes,
-        creatorId: overviewApiResponse.creatorId,
-      };
-      return ret;
+  const ret: ApifoxApiResponse = {
+    id: overviewApiResponse.id,
+    name: overviewApiResponse.name,
+    // desc: res.content.description,
+    method: overviewApiResponse.method,
+    path: overviewApiResponse.url,
+    realPath,
+    // TODO: 待补充
+    creator: `${overviewApiResponse.creatorId}`,
+    mockUrl: `${projectConfig?.mockPrefixUrl}/${overviewApiResponse.path}`,
+    sourceUrl: `${ApifoxBaseUrl}/project/${projectConfig?.id}/apis/api-${overviewApiResponse?.id}`,
+    mockData: scenes[0]?.mockData || {},
+    scenes,
+    creatorId: overviewApiResponse.creatorId,
+  };
+  return ret;
 };
 
 // export const moveApi: userScript.MoveApiRequest<
