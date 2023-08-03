@@ -49,10 +49,6 @@ interface ApifoxAddSceneResponse extends AddSceneResponse {}
 interface ApifoxSceneResponse extends SceneResponse {}
 
 const ApifoxBaseUrl = "https://app.apifox.com";
-const ApifoxApiBaseUrl = "https://Apifoxapi.alibaba-inc.com";
-
-const DEFAULT_SCENE_ID = "default";
-const DEFAULT_SCENE_NAME = "default";
 
 export const getProject: userScript.GetProjectRequest<{
   projectConfig: ApifoxProjectConfig;
@@ -143,7 +139,7 @@ export const getApi: userScript.GetApiRequest<
 
   const mocks = await context
   .fetchJSON<ApifoxOriginalQueryApiScenesResponse>(
-    `${ApifoxApiBaseUrl}/api/v1/api-mocks?locale=zh-CN`
+    `${ApifoxBaseUrl}/api/v1/api-mocks?locale=zh-CN`
   );
 
   const scenes: SceneResponse[] = mocks.data.filter((mock) => {
