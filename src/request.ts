@@ -20,8 +20,10 @@ import {
   ApifoxEditSceneOriginalPayload,
   ApifoxEditSceneOriginalResponse,
   ApifoxFolder,
-  ApifoxOriginalQueryApiScenesResponse,
+  ApifoxQueryApiDetailOriginalResponse,
+  ApifoxQueryApiScenesOriginalResponse,
   ApifoxOriginalQueryProjectResponse,
+  ApifoxQueryMembersOriginalResponse,
 } from "./types";
 
 function partition<T>(array: T[], predicate: (item: T) => boolean): [T[], T[]] {
@@ -70,11 +72,11 @@ interface ApifoxProjectConfig extends ProjectConfig {
 }
 
 interface ApifoxOverviewApiResponse extends OverviewApiResponse {
-  creatorId: number;
+
 }
 
 interface ApifoxApiResponse extends ApiResponse {
-  creatorId: number;
+
 }
 
 interface ApifoxAddSceneResponse extends AddSceneResponse {}
@@ -85,82 +87,88 @@ const ApifoxBaseUrl = "https://app.apifox.com";
 
 export const getProject: userScript.GetProjectRequest<{
   projectConfig: ApifoxProjectConfig;
-}> = (params, context) => {
+}> = async (params, context) => {
   const { projectConfig } = params;
+  const {
+    data: members,
+  } = await context.fetchJSON<ApifoxQueryMembersOriginalResponse>(
+    `${ApifoxBaseUrl}/api/v1/project-members`,
+    {
+      headers: makeRequestHeaders(projectConfig),
+    }
+  );
 
-  return context
-    .fetchJSON<ApifoxOriginalQueryProjectResponse>(
-      `${ApifoxBaseUrl}/api/v1/api-tree-list?locale=zh-CN`,
-      {
-        headers: makeRequestHeaders(projectConfig),
-      }
+  const res = await context.fetchJSON<ApifoxOriginalQueryProjectResponse>(
+    `${ApifoxBaseUrl}/api/v1/api-tree-list`,
+    {
+      headers: makeRequestHeaders(projectConfig),
+    }
+  );
+
+  const groups: GroupResponse[] = [];
+  const allApis: OverviewApiResponse[] = [];
+  const processApiData = (api: ApifoxApiDetail): OverviewApiResponse => {
+    const realPath = projectConfig.requestMap?.[api.path] || api.path;
+    const targetMember = (members || []).find(m => m.user.id === api.responsibleId);
+    return {
+      id: api.id,
+      name: api.name,
+      method: api.method.toUpperCase() as ApiMethod,
+      path: api.path,
+      realPath,
+      creator: `${targetMember?.nickname || '-'}`,
+      mockUrl: `${projectConfig?.mockPrefixUrl}${api.path}`,
+      sourceUrl: `${ApifoxBaseUrl}/project/${projectConfig?.id}/apis/api-${api?.id}`,
+    };
+  };
+
+  const processFolderData = (
+    folder: ApifoxFolder | ApifoxApiOverview,
+    prefix: string = ""
+  ) => {
+    if (
+      folder.type !== "apiDetailFolder" ||
+      !folder.children ||
+      folder.children.length === 0
     )
-    .then((res) => {
-      const groups: GroupResponse[] = [];
-      const allApis: OverviewApiResponse[] = [];
-      const processApiData = (api: ApifoxApiDetail): OverviewApiResponse => {
-        const realPath = projectConfig.requestMap?.[api.path] || api.path;
-        return {
-          id: api.id,
-          name: api.name,
-          method: api.method.toUpperCase() as ApiMethod,
-          path: api.path,
-          realPath,
-          creator: `${api.responsibleId}`,
-          mockUrl: `${projectConfig?.mockPrefixUrl}${api.path}`,
-          sourceUrl: `${ApifoxBaseUrl}/project/${projectConfig?.id}/apis/api-${api?.id}`,
-          creatorId: api.responsibleId,
-        };
-      };
+      return;
 
-      const processFolderData = (
-        folder: ApifoxFolder | ApifoxApiOverview,
-        prefix: string = ""
-      ) => {
-        if (
-          folder.type !== "apiDetailFolder" ||
-          !folder.children ||
-          folder.children.length === 0
-        )
-          return;
+    const [apis, folders] = partition(
+      folder.children || [],
+      (c) => c.type === "apiDetail"
+    );
 
-        const [apis, folders] = partition(
-          folder.children || [],
-          (c) => c.type === "apiDetail"
-        );
-
-        if (apis.length > 0) {
-          const processedApis = apis.map((c) =>
-            processApiData((c as ApifoxApiOverview).api)
-          );
-          allApis.push(...processedApis);
-          groups.push({
-            id: folder.key,
-            name: prefix ? `${prefix}__${folder.name}` : folder.name,
-            apis: processedApis,
-          });
-        }
-
-        folders.forEach((childFolder) => {
-          processFolderData(childFolder, folder.name);
-        });
-      };
-
-      res.data.forEach((folder) => {
-        processFolderData(folder);
+    if (apis.length > 0) {
+      const processedApis = apis.map((c) =>
+        processApiData((c as ApifoxApiOverview).api)
+      );
+      allApis.push(...processedApis);
+      groups.push({
+        id: folder.key,
+        name: prefix ? `${prefix}__${folder.name}` : folder.name,
+        apis: processedApis,
       });
+    }
 
-      return {
-        groups: [
-          {
-            id: "all",
-            name: "全部接口",
-            apis: allApis,
-          },
-          ...groups,
-        ],
-      };
+    folders.forEach((childFolder) => {
+      processFolderData(childFolder, folder.name);
     });
+  };
+
+  res.data.forEach((folder) => {
+    processFolderData(folder);
+  });
+
+  return {
+    groups: [
+      {
+        id: "all",
+        name: "全部接口",
+        apis: allApis,
+      },
+      ...groups,
+    ],
+  };
 };
 
 export const getApi: userScript.GetApiRequest<
@@ -172,8 +180,16 @@ export const getApi: userScript.GetApiRequest<
 > = async (params, context) => {
   const { projectConfig, overviewApiResponse } = params;
 
-  const mocks = await context.fetchJSON<ApifoxOriginalQueryApiScenesResponse>(
-    `${ApifoxBaseUrl}/api/v1/api-mocks?locale=zh-CN`,
+  const apiDetail =
+    await context.fetchJSON<ApifoxQueryApiDetailOriginalResponse>(
+      `${ApifoxBaseUrl}/api/v1/api-details/${overviewApiResponse.id}`,
+      {
+        headers: makeRequestHeaders(projectConfig),
+      }
+    );
+
+  const mocks = await context.fetchJSON<ApifoxQueryApiScenesOriginalResponse>(
+    `${ApifoxBaseUrl}/api/v1/api-mocks`,
     {
       headers: makeRequestHeaders(projectConfig),
     }
@@ -203,13 +219,12 @@ export const getApi: userScript.GetApiRequest<
     method: overviewApiResponse.method,
     path: overviewApiResponse.path,
     realPath,
-    // TODO: 待补充
-    creator: `${overviewApiResponse.creatorId}`,
+    desc: apiDetail?.data?.description,
+    creator: `${overviewApiResponse.creator}`,
     mockUrl: `${projectConfig?.mockPrefixUrl}${overviewApiResponse.path}`,
     sourceUrl: `${ApifoxBaseUrl}/project/${projectConfig?.id}/apis/api-${overviewApiResponse?.id}`,
     mockData: scenes[0]?.mockData || {},
     scenes,
-    creatorId: overviewApiResponse.creatorId,
   };
   return ret;
 };
@@ -258,11 +273,13 @@ export const addApiScene: userScript.AddApiSceneRequest<
     },
     name: addScenePayload.name,
     apiDetailId: apiResponse.id as number,
+    conditions: [],
+    ipCondition: {},
   };
 
   return context
     .fetchJSON<ApifoxAddSceneOriginalResponse>(
-      `${ApifoxBaseUrl}/api/v1/api-mocks?locale=zh-CN`,
+      `${ApifoxBaseUrl}/api/v1/api-mocks`,
       {
         method: "POST",
         body: JSON.stringify(payload),
@@ -297,10 +314,12 @@ export const updateApiScene: userScript.UpdateApiSceneRequest<
     name: sceneResponse.name,
     apiDetailId: apiResponse.id as number,
     id: sceneResponse.id as number,
+    conditions: [],
+    ipCondition: {},
   };
 
   return context.fetchJSON<ApifoxEditSceneOriginalResponse>(
-    `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}?locale=zh-CN`,
+    `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}`,
     {
       method: "POST",
       body: JSON.stringify(payload),
@@ -317,12 +336,13 @@ export const deleteApiScene: userScript.DeleteApiSceneRequest<
   },
   any
 > = (params, context) => {
-  const { sceneResponse } = params;
+  const { projectConfig, sceneResponse } = params;
 
   return context.fetchJSON<any>(
-    `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}?locale=zh-CN`,
+    `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}`,
     {
       method: "DELETE",
+      headers: makeRequestHeaders(projectConfig),
     }
   );
 };

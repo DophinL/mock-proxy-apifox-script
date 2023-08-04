@@ -118,8 +118,8 @@ export interface ApifoxAddSceneOriginalPayload {
     bodyType: string;
     bodyData: string;
   };
-  // conditions: [];
-  // ipCondition: {};
+  conditions: [];
+  ipCondition: {};
 }
 
 export interface ApifoxEditSceneOriginalPayload extends ApifoxAddSceneOriginalPayload {
@@ -130,8 +130,36 @@ export interface ApifoxEditSceneOriginalResponse {
   success: boolean;
 }
 
-export interface ApifoxOriginalQueryApiScenesResponse {
+export interface ApifoxQueryApiScenesOriginalResponse {
   success: boolean;
   data: ApifoxMockScene[];
 }
 
+export interface ApifoxMember {
+  nickname: string;
+  id: number;
+  projectId: number;
+  teamId: number;
+  userId: number;
+  roleType: number;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    avatar: string;
+    features: Record<string, unknown>;
+    id: number;
+    name: string;
+    username: string;
+    status: number;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: null;
+  };
+}
+
+export interface ApifoxQueryMembersOriginalResponse {
+  success: boolean;
+  data: ApifoxMember[];
+}
+
+export type * from './api-detail';
