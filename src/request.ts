@@ -45,6 +45,18 @@ function partition<T>(array: T[], predicate: (item: T) => boolean): [T[], T[]] {
   return [satisfied, unsatisfied];
 }
 
+function jsonToFormData(json: Record<string, any>) {
+  let formData = new FormData();
+
+  for (let key in json) {
+      if(json.hasOwnProperty(key)) {
+          formData.append(key, json[key]);
+      }
+  }
+
+  return formData;
+}
+
 function makeRequestHeaders(projectConfig: ApifoxProjectConfig) {
   return {
     "X-Project-Id": `${projectConfig.id}`,
@@ -282,7 +294,7 @@ export const addApiScene: userScript.AddApiSceneRequest<
       `${ApifoxBaseUrl}/api/v1/api-mocks`,
       {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: jsonToFormData(payload),
         headers: makeRequestHeaders(projectConfig),
       }
     )
@@ -321,8 +333,8 @@ export const updateApiScene: userScript.UpdateApiSceneRequest<
   return context.fetchJSON<ApifoxEditSceneOriginalResponse>(
     `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}`,
     {
-      method: "POST",
-      body: JSON.stringify(payload),
+      method: "PUT",
+      body: jsonToFormData(payload),
       headers: makeRequestHeaders(projectConfig),
     }
   );
