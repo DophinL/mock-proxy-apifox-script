@@ -21,8 +21,8 @@ import {
 } from "./types";
 
 function partition<T>(array: T[], predicate: (item: T) => boolean): [T[], T[]] {
-  if (!Array.isArray(array) || typeof predicate !== 'function') {
-    throw new Error('Invalid arguments. Expected an array and a function.');
+  if (!Array.isArray(array) || typeof predicate !== "function") {
+    throw new Error("Invalid arguments. Expected an array and a function.");
   }
 
   const satisfied: T[] = [];
@@ -179,9 +179,9 @@ export const getApi: userScript.GetApiRequest<
     .filter((mock) => {
       return mock.apiDetailId === overviewApiResponse.id;
     })
-    .map((mock) => {
+    .map((mock, index) => {
       return {
-        id: mock.id,
+        id: index === 0 ? "default" : mock.id,
         name: mock.name,
         mockUrl: `${projectConfig?.mockPrefixUrl}${overviewApiResponse.path}`,
         mockData: JSON.parse(mock.response.bodyData),
@@ -189,8 +189,8 @@ export const getApi: userScript.GetApiRequest<
     });
 
   const realPath =
-    projectConfig.requestMap?.[overviewApiResponse.url] ||
-    overviewApiResponse.url;
+    projectConfig.requestMap?.[overviewApiResponse.path] ||
+    overviewApiResponse.path;
 
   const ret: ApifoxApiResponse = {
     id: overviewApiResponse.id,
