@@ -1,6 +1,6 @@
 {
   "name": "mock-proxy-apifox-script",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "mock proxy apifox脚本",
   "dependencies": {
     "mock-proxy-kit": "^2.0.0"

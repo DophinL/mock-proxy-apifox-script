@@ -45,16 +45,12 @@ function partition<T>(array: T[], predicate: (item: T) => boolean): [T[], T[]] {
   return [satisfied, unsatisfied];
 }
 
-function jsonToFormData(json: Record<string, any>) {
-  let formData = new FormData();
-
-  for (let key in json) {
-      if(json.hasOwnProperty(key)) {
-          formData.append(key, json[key]);
-      }
-  }
-
-  return formData;
+function jsonToUrlEncoded(jsonObj: Record<string, any>) {
+  return Object.keys(jsonObj)
+    .map(
+      (key) => encodeURIComponent(key) + "=" + encodeURIComponent(jsonObj[key])
+    )
+    .join("&");
 }
 
 function makeRequestHeaders(projectConfig: ApifoxProjectConfig) {
@@ -83,13 +79,9 @@ interface ApifoxProjectConfig extends ProjectConfig {
   clientVersion?: string;
 }
 
-interface ApifoxOverviewApiResponse extends OverviewApiResponse {
+interface ApifoxOverviewApiResponse extends OverviewApiResponse {}
 
-}
-
-interface ApifoxApiResponse extends ApiResponse {
-
-}
+interface ApifoxApiResponse extends ApiResponse {}
 
 interface ApifoxAddSceneResponse extends AddSceneResponse {}
 
@@ -101,14 +93,13 @@ export const getProject: userScript.GetProjectRequest<{
   projectConfig: ApifoxProjectConfig;
 }> = async (params, context) => {
   const { projectConfig } = params;
-  const {
-    data: members,
-  } = await context.fetchJSON<ApifoxQueryMembersOriginalResponse>(
-    `${ApifoxBaseUrl}/api/v1/project-members`,
-    {
-      headers: makeRequestHeaders(projectConfig),
-    }
-  );
+  const { data: members } =
+    await context.fetchJSON<ApifoxQueryMembersOriginalResponse>(
+      `${ApifoxBaseUrl}/api/v1/project-members`,
+      {
+        headers: makeRequestHeaders(projectConfig),
+      }
+    );
 
   const res = await context.fetchJSON<ApifoxOriginalQueryProjectResponse>(
     `${ApifoxBaseUrl}/api/v1/api-tree-list`,
@@ -121,14 +112,16 @@ export const getProject: userScript.GetProjectRequest<{
   const allApis: OverviewApiResponse[] = [];
   const processApiData = (api: ApifoxApiDetail): OverviewApiResponse => {
     const realPath = projectConfig.requestMap?.[api.path] || api.path;
-    const targetMember = (members || []).find(m => m.user.id === api.responsibleId);
+    const targetMember = (members || []).find(
+      (m) => m.user.id === api.responsibleId
+    );
     return {
       id: api.id,
       name: api.name,
       method: api.method.toUpperCase() as ApiMethod,
       path: api.path,
       realPath,
-      creator: `${targetMember?.nickname || '-'}`,
+      creator: `${targetMember?.nickname || "-"}`,
       mockUrl: `${projectConfig?.mockPrefixUrl}${api.path}`,
       sourceUrl: `${ApifoxBaseUrl}/project/${projectConfig?.id}/apis/api-${api?.id}`,
     };
@@ -294,8 +287,11 @@ export const addApiScene: userScript.AddApiSceneRequest<
       `${ApifoxBaseUrl}/api/v1/api-mocks`,
       {
         method: "POST",
-        body: jsonToFormData(payload),
-        headers: makeRequestHeaders(projectConfig),
+        body: jsonToUrlEncoded(payload),
+        headers: {
+          ...makeRequestHeaders(projectConfig),
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
       }
     )
     .then((res) => {
@@ -334,8 +330,11 @@ export const updateApiScene: userScript.UpdateApiSceneRequest<
     `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}`,
     {
       method: "PUT",
-      body: jsonToFormData(payload),
-      headers: makeRequestHeaders(projectConfig),
+      body: jsonToUrlEncoded(payload),
+      headers: {
+        ...makeRequestHeaders(projectConfig),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
     }
   );
 };
