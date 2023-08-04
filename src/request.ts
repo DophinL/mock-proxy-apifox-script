@@ -20,6 +20,25 @@ import {
   ApifoxOriginalQueryProjectResponse,
 } from "./types";
 
+function partition<T>(array: T[], predicate: (item: T) => boolean): [T[], T[]] {
+  if (!Array.isArray(array) || typeof predicate !== 'function') {
+    throw new Error('Invalid arguments. Expected an array and a function.');
+  }
+
+  const satisfied: T[] = [];
+  const unsatisfied: T[] = [];
+
+  for (const item of array) {
+    if (predicate(item)) {
+      satisfied.push(item);
+    } else {
+      unsatisfied.push(item);
+    }
+  }
+
+  return [satisfied, unsatisfied];
+}
+
 function removePrefixSlash(str: string) {
   return str.replace(/^\/+/, "");
 }
@@ -70,6 +89,7 @@ export const getProject: userScript.GetProjectRequest<{
     )
     .then((res) => {
       const groups: GroupResponse[] = [];
+      const allApis: OverviewApiResponse[] = [];
       const processApiData = (api: ApifoxApiDetail): OverviewApiResponse => {
         const realPath = projectConfig.requestMap?.[api.path] || api.path;
         return {
@@ -85,17 +105,6 @@ export const getProject: userScript.GetProjectRequest<{
         };
       };
 
-      const isChildrenApis = (folder: ApifoxFolder) => {
-        if (
-          folder.children?.length > 0 &&
-          folder.children[0].type === "apiDetail"
-        ) {
-          return true;
-        }
-
-        return false;
-      };
-
       const processFolderData = (
         folder: ApifoxFolder | ApifoxApiOverview,
         prefix: string = ""
@@ -107,19 +116,26 @@ export const getProject: userScript.GetProjectRequest<{
         )
           return;
 
-        if (isChildrenApis(folder as ApifoxFolder)) {
+        const [apis, folders] = partition(
+          folder.children || [],
+          (c) => c.type === "apiDetail"
+        );
+
+        if (apis.length > 0) {
+          const processedApis = apis.map((c) =>
+            processApiData((c as ApifoxApiOverview).api)
+          );
+          allApis.push(...processedApis);
           groups.push({
-            id: (folder as ApifoxFolder).key,
-            name: `${prefix}__${folder.name}`,
-            apis: folder.children.map((c) =>
-              processApiData((c as ApifoxApiOverview).api)
-            ),
-          });
-        } else {
-          folder.children.forEach((childFolder) => {
-            processFolderData(childFolder, folder.name);
+            id: folder.key,
+            name: prefix ? `${prefix}__${folder.name}` : folder.name,
+            apis: processedApis,
           });
         }
+
+        folders.forEach((childFolder) => {
+          processFolderData(childFolder, folder.name);
+        });
       };
 
       res.data.forEach((folder) => {
@@ -127,7 +143,14 @@ export const getProject: userScript.GetProjectRequest<{
       });
 
       return {
-        groups,
+        groups: [
+          {
+            id: "all",
+            name: "全部接口",
+            apis: allApis,
+          },
+          ...groups,
+        ],
       };
     });
 };
@@ -142,7 +165,14 @@ export const getApi: userScript.GetApiRequest<
   const { projectConfig, overviewApiResponse } = params;
 
   const mocks = await context.fetchJSON<ApifoxOriginalQueryApiScenesResponse>(
-    `${ApifoxBaseUrl}/api/v1/api-mocks?locale=zh-CN`
+    `${ApifoxBaseUrl}/api/v1/api-mocks?locale=zh-CN`,
+    {
+      headers: {
+        "X-Project-Id": `${projectConfig.id}`,
+        Authorization: projectConfig?.bearerToken!,
+        "X-Client-Version": projectConfig?.clientVersion!,
+      },
+    }
   );
 
   const scenes: SceneResponse[] = mocks.data
