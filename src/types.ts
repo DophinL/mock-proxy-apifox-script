@@ -84,6 +84,51 @@ export interface ApifoxMockScene {
   editorId: number;
 }
 
+export interface ApifoxAddSceneOriginalResponse {
+  success: boolean;
+  data: {
+    id: number;
+    name: string;
+    apiDetailId: number;
+    projectId: number;
+    conditions: any[]; // Replace 'any' with the specific type if possible
+    ipCondition: Record<string, unknown>; // Replace 'unknown' with the specific type if possible
+    response: {
+      code: number;
+      delay: number;
+      headers: any[]; // Replace 'any' with the specific type if possible
+      bodyType: string;
+      bodyData: string;
+    };
+    ordering: number;
+    createdAt: string;
+    updatedAt: string;
+    creatorId: number;
+    editorId: number;
+  };
+}
+
+export interface ApifoxAddSceneOriginalPayload {
+  name: string;
+  apiDetailId: number;
+  response: {
+    code: number;
+    delay: number;
+    headers: any[]; // Replace 'any' with the specific type if possible
+    bodyType: string;
+    bodyData: string;
+  };
+  // conditions: [];
+  // ipCondition: {};
+}
+
+export interface ApifoxEditSceneOriginalPayload extends ApifoxAddSceneOriginalPayload {
+  id: number;
+}
+
+export interface ApifoxEditSceneOriginalResponse {
+  success: boolean;
+}
 
 export interface ApifoxOriginalQueryApiScenesResponse {
   success: boolean;

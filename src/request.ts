@@ -13,8 +13,12 @@ import {
   ApiMethod,
 } from "mock-proxy-kit";
 import {
+  ApifoxAddSceneOriginalPayload,
+  ApifoxAddSceneOriginalResponse,
   ApifoxApiDetail,
   ApifoxApiOverview,
+  ApifoxEditSceneOriginalPayload,
+  ApifoxEditSceneOriginalResponse,
   ApifoxFolder,
   ApifoxOriginalQueryApiScenesResponse,
   ApifoxOriginalQueryProjectResponse,
@@ -37,6 +41,14 @@ function partition<T>(array: T[], predicate: (item: T) => boolean): [T[], T[]] {
   }
 
   return [satisfied, unsatisfied];
+}
+
+function makeRequestHeaders(projectConfig: ApifoxProjectConfig) {
+  return {
+    "X-Project-Id": `${projectConfig.id}`,
+    Authorization: projectConfig?.bearerToken!,
+    "X-Client-Version": projectConfig?.clientVersion!,
+  };
 }
 
 function removePrefixSlash(str: string) {
@@ -80,11 +92,7 @@ export const getProject: userScript.GetProjectRequest<{
     .fetchJSON<ApifoxOriginalQueryProjectResponse>(
       `${ApifoxBaseUrl}/api/v1/api-tree-list?locale=zh-CN`,
       {
-        headers: {
-          "X-Project-Id": `${projectConfig.id}`,
-          Authorization: projectConfig?.bearerToken!,
-          "X-Client-Version": projectConfig?.clientVersion!,
-        },
+        headers: makeRequestHeaders(projectConfig),
       }
     )
     .then((res) => {
@@ -167,11 +175,7 @@ export const getApi: userScript.GetApiRequest<
   const mocks = await context.fetchJSON<ApifoxOriginalQueryApiScenesResponse>(
     `${ApifoxBaseUrl}/api/v1/api-mocks?locale=zh-CN`,
     {
-      headers: {
-        "X-Project-Id": `${projectConfig.id}`,
-        Authorization: projectConfig?.bearerToken!,
-        "X-Client-Version": projectConfig?.clientVersion!,
-      },
+      headers: makeRequestHeaders(projectConfig),
     }
   );
 
@@ -185,6 +189,7 @@ export const getApi: userScript.GetApiRequest<
         name: mock.name,
         mockUrl: `${projectConfig?.mockPrefixUrl}${overviewApiResponse.path}`,
         mockData: JSON.parse(mock.response.bodyData),
+        realSceneId: mock.id,
       };
     });
 
@@ -234,90 +239,90 @@ export const getApi: userScript.GetApiRequest<
 //   });
 // };
 
-// export const addApiScene: userScript.AddApiSceneRequest<
-//   AddApiSceneRequestParams & {
-//     projectConfig: ApifoxProjectConfig;
-//     apiResponse: ApifoxApiResponse;
-//   },
-//   ApifoxAddSceneResponse
-// > = (params, context) => {
-//   const { projectConfig, apiResponse, addScenePayload } = params;
+export const addApiScene: userScript.AddApiSceneRequest<
+  AddApiSceneRequestParams & {
+    projectConfig: ApifoxProjectConfig;
+    apiResponse: ApifoxApiResponse;
+  },
+  ApifoxAddSceneResponse
+> = (params, context) => {
+  const { projectConfig, apiResponse, addScenePayload } = params;
 
-//   const payload = {
-//     body: JSON.stringify(addScenePayload.mockData),
-//     creatorId: apiResponse.creatorId,
-//     interfaceId: apiResponse.id,
-//     moduleId: apiResponse.moduleId,
-//     name: addScenePayload.name,
-//     repositoryId: projectConfig.id,
-//     scope: "response",
-//   };
+  const payload: ApifoxAddSceneOriginalPayload = {
+    response: {
+      code: 200,
+      delay: 0,
+      headers: [],
+      bodyType: "json",
+      bodyData: JSON.stringify(addScenePayload.mockData),
+    },
+    name: addScenePayload.name,
+    apiDetailId: apiResponse.id as number,
+  };
 
-//   return context
-//     .fetchJSON<ApifoxOriginalEditSceneResponse>(
-//       `${ApifoxApiBaseUrl}/scene/create`,
-//       {
-//         method: "POST",
-//         body: JSON.stringify(payload),
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     )
-//     .then((res) => {
-//       return {
-//         id: res.data.id,
-//       };
-//     });
-// };
+  return context
+    .fetchJSON<ApifoxAddSceneOriginalResponse>(
+      `${ApifoxBaseUrl}/api/v1/api-mocks?locale=zh-CN`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: makeRequestHeaders(projectConfig),
+      }
+    )
+    .then((res) => {
+      return {
+        id: res.data.id,
+      };
+    });
+};
 
-// export const updateApiScene: userScript.UpdateApiSceneRequest<
-//   UpdateApiSceneRequestParams & {
-//     projectConfig: ApifoxProjectConfig;
-//     apiResponse: ApifoxApiResponse;
-//     sceneResponse: ApifoxSceneResponse;
-//   },
-//   ApifoxOriginalEditSceneResponse
-// > = (params, context) => {
-//   const { projectConfig, apiResponse, sceneResponse } = params;
+export const updateApiScene: userScript.UpdateApiSceneRequest<
+  UpdateApiSceneRequestParams & {
+    projectConfig: ApifoxProjectConfig;
+    apiResponse: ApifoxApiResponse;
+    sceneResponse: ApifoxSceneResponse;
+  },
+  any
+> = (params, context) => {
+  const { projectConfig, apiResponse, sceneResponse } = params;
 
-//   const payload = {
-//     id: sceneResponse.id,
-//     body: JSON.stringify(sceneResponse.mockData),
-//     creatorId: apiResponse.creatorId,
-//     interfaceId: apiResponse.id,
-//     moduleId: apiResponse.moduleId,
-//     name: sceneResponse.name,
-//     repositoryId: projectConfig.id,
-//     scope: "response",
-//   };
+  const payload: ApifoxEditSceneOriginalPayload = {
+    response: {
+      code: 200,
+      delay: 0,
+      headers: [],
+      bodyType: "json",
+      bodyData: JSON.stringify(sceneResponse.mockData),
+    },
+    name: sceneResponse.name,
+    apiDetailId: apiResponse.id as number,
+    id: sceneResponse.id as number,
+  };
 
-//   return context.fetchJSON<ApifoxOriginalEditSceneResponse>(
-//     `${ApifoxApiBaseUrl}/scene/update`,
-//     {
-//       method: "POST",
-//       body: JSON.stringify(payload),
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//     }
-//   );
-// };
+  return context.fetchJSON<ApifoxEditSceneOriginalResponse>(
+    `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}?locale=zh-CN`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+      headers: makeRequestHeaders(projectConfig),
+    }
+  );
+};
 
-// export const deleteApiScene: userScript.DeleteApiSceneRequest<
-//   UpdateApiSceneRequestParams & {
-//     projectConfig: ApifoxProjectConfig;
-//     apiResponse: ApifoxApiResponse;
-//     sceneResponse: ApifoxSceneResponse;
-//   },
-//   any
-// > = (params, context) => {
-//   const { sceneResponse } = params;
+export const deleteApiScene: userScript.DeleteApiSceneRequest<
+  UpdateApiSceneRequestParams & {
+    projectConfig: ApifoxProjectConfig;
+    apiResponse: ApifoxApiResponse;
+    sceneResponse: ApifoxSceneResponse;
+  },
+  any
+> = (params, context) => {
+  const { sceneResponse } = params;
 
-//   return context.fetchJSON<any>(
-//     `${ApifoxApiBaseUrl}/scene/remove?id=${sceneResponse.id}`,
-//     {
-//       method: "GET",
-//     }
-//   );
-// };
+  return context.fetchJSON<any>(
+    `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}?locale=zh-CN`,
+    {
+      method: "DELETE",
+    }
+  );
+};
