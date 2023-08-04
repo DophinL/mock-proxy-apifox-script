@@ -99,7 +99,7 @@ export const getProject: userScript.GetProjectRequest<{
           path: api.path,
           realPath,
           creator: `${api.responsibleId}`,
-          mockUrl: `${projectConfig?.mockPrefixUrl}/${api.path}`,
+          mockUrl: `${projectConfig?.mockPrefixUrl}${api.path}`,
           sourceUrl: `${ApifoxBaseUrl}/project/${projectConfig?.id}/apis/api-${api?.id}`,
           creatorId: api.responsibleId,
         };
@@ -183,7 +183,7 @@ export const getApi: userScript.GetApiRequest<
       return {
         id: mock.id,
         name: mock.name,
-        mockUrl: `${projectConfig?.mockPrefixUrl}/${overviewApiResponse.path}`,
+        mockUrl: `${projectConfig?.mockPrefixUrl}${overviewApiResponse.path}`,
         mockData: JSON.parse(mock.response.bodyData),
       };
     });
@@ -195,13 +195,12 @@ export const getApi: userScript.GetApiRequest<
   const ret: ApifoxApiResponse = {
     id: overviewApiResponse.id,
     name: overviewApiResponse.name,
-    // desc: res.content.description,
     method: overviewApiResponse.method,
-    path: overviewApiResponse.url,
+    path: overviewApiResponse.path,
     realPath,
     // TODO: 待补充
     creator: `${overviewApiResponse.creatorId}`,
-    mockUrl: `${projectConfig?.mockPrefixUrl}/${overviewApiResponse.path}`,
+    mockUrl: `${projectConfig?.mockPrefixUrl}${overviewApiResponse.path}`,
     sourceUrl: `${ApifoxBaseUrl}/project/${projectConfig?.id}/apis/api-${overviewApiResponse?.id}`,
     mockData: scenes[0]?.mockData || {},
     scenes,
