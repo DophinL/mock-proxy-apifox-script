@@ -45,14 +45,6 @@ function partition<T>(array: T[], predicate: (item: T) => boolean): [T[], T[]] {
   return [satisfied, unsatisfied];
 }
 
-function jsonToUrlEncoded(jsonObj: Record<string, any>) {
-  return Object.keys(jsonObj)
-    .map(
-      (key) => encodeURIComponent(key) + "=" + encodeURIComponent(jsonObj[key])
-    )
-    .join("&");
-}
-
 function makeRequestHeaders(projectConfig: ApifoxProjectConfig) {
   return {
     "X-Project-Id": `${projectConfig.id}`,
@@ -287,12 +279,12 @@ export const addApiScene: userScript.AddApiSceneRequest<
       `${ApifoxBaseUrl}/api/v1/api-mocks`,
       {
         method: "POST",
-        body: jsonToUrlEncoded(payload),
+        body: JSON.stringify(payload),
         headers: {
           ...makeRequestHeaders(projectConfig),
-          "Content-Type": "application/x-www-form-urlencoded",
         },
-      }
+      },
+      { transformBodyToFormData: true }
     )
     .then((res) => {
       return {
@@ -330,12 +322,12 @@ export const updateApiScene: userScript.UpdateApiSceneRequest<
     `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}`,
     {
       method: "PUT",
-      body: jsonToUrlEncoded(payload),
+      body: JSON.stringify(payload),
       headers: {
         ...makeRequestHeaders(projectConfig),
-        "Content-Type": "application/x-www-form-urlencoded",
       },
-    }
+    },
+    { transformBodyToFormData: true }
   );
 };
 

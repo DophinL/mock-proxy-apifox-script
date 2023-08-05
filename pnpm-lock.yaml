@@ -6,13 +6,11 @@ specifiers:
   '@typescript-eslint/parser': ^4.19.0
   esbuild: ^0.14.19
   eslint: ^7.22.0
-  lodash: ^4.17.21
-  mock-proxy-kit: ^2.0.0
+  mock-proxy-kit: ^2.2.4
   typescript: ^4.2.3
 
 dependencies:
-  lodash: 4.17.21
-  mock-proxy-kit: 2.2.3
+  mock-proxy-kit: 2.2.4
 
 devDependencies:
   '@types/lodash': 4.14.196
@@ -970,10 +968,6 @@ packages:
     resolution: {integrity: sha512-jttmRe7bRse52OsWIMDLaXxWqRAmtIUccAQ3garviCqJjafXOfNMO0yMfNpdD6zbGaTU0P5Nz7e7gAT6cKmJRw==}
     dev: true
 
-  /lodash/4.17.21:
-    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
-    dev: false
-
   /lru-cache/6.0.0:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
@@ -1000,8 +994,8 @@ packages:
       brace-expansion: 1.1.11
     dev: true
 
-  /mock-proxy-kit/2.2.3:
-    resolution: {integrity: sha512-ObZN6RNzCkygdpbiOllTcnhrI2nSRO64FCuEwQVJh4AO9AvRX2MfMFPopm1VB1yaeaHGvbK+QUaQmq/XSrM1OA==}
+  /mock-proxy-kit/2.2.4:
+    resolution: {integrity: sha512-WRM3YxgnxtC8peeiTGb18bOIq9rU2XK8G1750cbgvS9pPWpT/Fyj2TJhreUwe4sINLj8GAJn4ZSJMj5xcbVUSQ==}
     dev: false
 
   /ms/2.1.2:
