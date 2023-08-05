@@ -7,7 +7,6 @@ import {
   userScript,
   AddSceneResponse,
   GetApiRequestParams,
-  MoveApiRequestParams,
   AddApiSceneRequestParams,
   UpdateApiSceneRequestParams,
   ApiMethod,
@@ -43,6 +42,20 @@ function partition<T>(array: T[], predicate: (item: T) => boolean): [T[], T[]] {
   }
 
   return [satisfied, unsatisfied];
+}
+
+function jsonToUrlEncoded(jsonObj: Record<string, any>, prefix = ''): string {
+  return Object.entries(jsonObj)
+    .map(([key, value]) => {
+      if (typeof value === 'object' && value !== null) {
+        // If the value is an object or array, recurse.
+        return jsonToUrlEncoded(value, `${prefix}${encodeURIComponent(key)}_`);
+      } else {
+        // Otherwise, encode the key and value normally.
+        return `${prefix}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+      }
+    })
+    .join('&');
 }
 
 function makeRequestHeaders(projectConfig: ApifoxProjectConfig) {
@@ -279,12 +292,12 @@ export const addApiScene: userScript.AddApiSceneRequest<
       `${ApifoxBaseUrl}/api/v1/api-mocks`,
       {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: jsonToUrlEncoded(payload),
         headers: {
           ...makeRequestHeaders(projectConfig),
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-      },
-      { transformBodyToFormData: true }
+      }
     )
     .then((res) => {
       return {
@@ -322,12 +335,12 @@ export const updateApiScene: userScript.UpdateApiSceneRequest<
     `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}`,
     {
       method: "PUT",
-      body: JSON.stringify(payload),
+      body: jsonToUrlEncoded(payload),
       headers: {
         ...makeRequestHeaders(projectConfig),
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-    },
-    { transformBodyToFormData: true }
+    }
   );
 };
 
