@@ -44,15 +44,15 @@ function partition<T>(array: T[], predicate: (item: T) => boolean): [T[], T[]] {
   return [satisfied, unsatisfied];
 }
 
-function jsonToUrlEncoded(jsonObj: Record<string, any>, prefix = ''): string {
-  return Object.entries(jsonObj)
-    .map(([key, value]) => {
-      if (typeof value === 'object' && value !== null) {
-        // If the value is an object or array, recurse.
-        return jsonToUrlEncoded(value, `${prefix}${encodeURIComponent(key)}_`);
+function jsonToUrlEncoded(jsonObj: Record<string, any>) {
+  return Object.keys(jsonObj)
+    .map(key => {
+      if (typeof jsonObj[key] === 'object' && jsonObj[key] !== null) {
+        // If the value is an object or array, convert it to a JSON string and encode it.
+        return encodeURIComponent(key) + '=' + encodeURIComponent(JSON.stringify(jsonObj[key]));
       } else {
         // Otherwise, encode the key and value normally.
-        return `${prefix}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+        return encodeURIComponent(key) + '=' + encodeURIComponent(jsonObj[key]);
       }
     })
     .join('&');
