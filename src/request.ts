@@ -209,9 +209,9 @@ export const getApi: userScript.GetApiRequest<
     .filter((mock) => {
       return mock.apiDetailId === overviewApiResponse.id;
     })
-    .map((mock, index) => {
+    .map((mock) => {
       return {
-        id: index === 0 ? "default" : mock.id,
+        id: mock.id,
         name: mock.name,
         mockUrl: `${projectConfig?.mockPrefixUrl}${overviewApiResponse.path}`,
         mockData: JSON.parse(mock.response.bodyData),
