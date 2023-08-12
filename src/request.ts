@@ -220,6 +220,9 @@ export const getApi: userScript.GetApiRequest<
       };
     });
 
+  let exampleMockData = apiDetail?.data?.responseExamples?.[0]?.data;
+  exampleMockData = !!exampleMockData ? dirtyJson.parse(exampleMockData) : '';
+
   const realPath =
     projectConfig.requestMap?.[overviewApiResponse.path] ||
     overviewApiResponse.path;
@@ -234,7 +237,7 @@ export const getApi: userScript.GetApiRequest<
     creator: `${overviewApiResponse.creator}`,
     mockUrl: `${projectConfig?.mockPrefixUrl}${overviewApiResponse.path}`,
     sourceUrl: `${ApifoxBaseUrl}/project/${projectConfig?.id}/apis/api-${overviewApiResponse?.id}`,
-    mockData: scenes[0]?.mockData || {},
+    mockData: exampleMockData || scenes[0]?.mockData || {},
     scenes,
   };
   return ret;
