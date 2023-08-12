@@ -11,6 +11,7 @@ import {
   UpdateApiSceneRequestParams,
   ApiMethod,
 } from "mock-proxy-kit";
+import dirtyJson from 'dirty-json';
 import {
   ApifoxAddSceneOriginalPayload,
   ApifoxAddSceneOriginalResponse,
@@ -214,7 +215,7 @@ export const getApi: userScript.GetApiRequest<
         id: mock.id,
         name: mock.name,
         mockUrl: `${projectConfig?.mockPrefixUrl}${overviewApiResponse.path}`,
-        mockData: JSON.parse(mock.response.bodyData),
+        mockData: dirtyJson.parse(mock.response.bodyData),
         realSceneId: mock.id,
       };
     });
