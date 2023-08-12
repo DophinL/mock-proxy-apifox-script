@@ -67,9 +67,9 @@ function makeRequestHeaders(projectConfig: ApifoxProjectConfig) {
   };
 }
 
-function removePrefixSlash(str: string) {
-  return str.replace(/^\/+/, "");
-}
+// function removePrefixSlash(str: string) {
+//   return str.replace(/^\/+/, "");
+// }
 
 interface RequestMap {
   /**
