@@ -7,12 +7,12 @@ specifiers:
   dirty-json: ^0.9.2
   esbuild: ^0.14.19
   eslint: ^7.22.0
-  mock-proxy-kit: ^2.2.4
+  mock-proxy-kit: ^2.3.1
   typescript: ^4.2.3
 
 dependencies:
   dirty-json: 0.9.2
-  mock-proxy-kit: 2.2.4
+  mock-proxy-kit: 2.3.1
 
 devDependencies:
   '@types/lodash': 4.14.196
@@ -1010,8 +1010,8 @@ packages:
       brace-expansion: 1.1.11
     dev: true
 
-  /mock-proxy-kit/2.2.4:
-    resolution: {integrity: sha512-WRM3YxgnxtC8peeiTGb18bOIq9rU2XK8G1750cbgvS9pPWpT/Fyj2TJhreUwe4sINLj8GAJn4ZSJMj5xcbVUSQ==}
+  /mock-proxy-kit/2.3.1:
+    resolution: {integrity: sha512-Uz8sqVgtJUcp8ugebnyh68n1427r8J40oSzuTHsb9+QjkzoQjQVQZeSYqqScYvaguhw+r0h6u1NlDx1EP8oDMg==}
     dev: false
 
   /ms/2.1.2:

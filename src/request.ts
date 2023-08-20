@@ -10,6 +10,7 @@ import {
   AddApiSceneRequestParams,
   UpdateApiSceneRequestParams,
   ApiMethod,
+  TeamConfig,
 } from "mock-proxy-kit";
 import dirtyJson from 'dirty-json';
 import {
@@ -59,10 +60,10 @@ function jsonToUrlEncoded(jsonObj: Record<string, any>) {
     .join('&');
 }
 
-function makeRequestHeaders(projectConfig: ApifoxProjectConfig) {
+function makeRequestHeaders(projectConfig: ApifoxProjectConfig, teamConfig: TeamConfig) {
   return {
     "X-Project-Id": `${projectConfig.id}`,
-    Authorization: projectConfig?.bearerToken!,
+    Authorization: teamConfig?.accessToken!,
     "X-Client-Version": projectConfig?.clientVersion!,
   };
 }
@@ -81,7 +82,6 @@ interface RequestMap {
 interface ApifoxProjectConfig extends ProjectConfig {
   requestMap?: RequestMap;
   mockPrefixUrl?: string;
-  bearerToken?: string;
   clientVersion?: string;
 }
 
@@ -103,14 +103,14 @@ export const getProject: userScript.GetProjectRequest<{
     await context.fetchJSON<ApifoxQueryMembersOriginalResponse>(
       `${ApifoxBaseUrl}/api/v1/project-members`,
       {
-        headers: makeRequestHeaders(projectConfig),
+        headers: makeRequestHeaders(projectConfig, context.teamConfig),
       }
     );
 
   const res = await context.fetchJSON<ApifoxOriginalQueryProjectResponse>(
     `${ApifoxBaseUrl}/api/v1/api-tree-list`,
     {
-      headers: makeRequestHeaders(projectConfig),
+      headers: makeRequestHeaders(projectConfig, context.teamConfig),
     }
   );
 
@@ -195,14 +195,14 @@ export const getApi: userScript.GetApiRequest<
     await context.fetchJSON<ApifoxQueryApiDetailOriginalResponse>(
       `${ApifoxBaseUrl}/api/v1/api-details/${overviewApiResponse.id}`,
       {
-        headers: makeRequestHeaders(projectConfig),
+        headers: makeRequestHeaders(projectConfig, context.teamConfig),
       }
     );
 
   const mocks = await context.fetchJSON<ApifoxQueryApiScenesOriginalResponse>(
     `${ApifoxBaseUrl}/api/v1/api-mocks`,
     {
-      headers: makeRequestHeaders(projectConfig),
+      headers: makeRequestHeaders(projectConfig, context.teamConfig),
     }
   );
 
@@ -298,7 +298,7 @@ export const addApiScene: userScript.AddApiSceneRequest<
         method: "POST",
         body: jsonToUrlEncoded(payload),
         headers: {
-          ...makeRequestHeaders(projectConfig),
+          ...makeRequestHeaders(projectConfig, context.teamConfig),
           "Content-Type": "application/x-www-form-urlencoded",
         },
       }
@@ -341,7 +341,7 @@ export const updateApiScene: userScript.UpdateApiSceneRequest<
       method: "PUT",
       body: jsonToUrlEncoded(payload),
       headers: {
-        ...makeRequestHeaders(projectConfig),
+        ...makeRequestHeaders(projectConfig, context.teamConfig),
         "Content-Type": "application/x-www-form-urlencoded",
       },
     }
@@ -362,7 +362,7 @@ export const deleteApiScene: userScript.DeleteApiSceneRequest<
     `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}`,
     {
       method: "DELETE",
-      headers: makeRequestHeaders(projectConfig),
+      headers: makeRequestHeaders(projectConfig, context.teamConfig),
     }
   );
 };
