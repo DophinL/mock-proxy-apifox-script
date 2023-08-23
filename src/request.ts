@@ -11,7 +11,7 @@ import {
   UpdateApiSceneRequestParams,
   ApiMethod,
   TeamConfig,
-} from "mock-proxy-kit";
+} from "@mock-proxy/mock-proxy-kit";
 import dirtyJson from 'dirty-json';
 import {
   ApifoxAddSceneOriginalPayload,
