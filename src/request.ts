@@ -113,6 +113,9 @@ export const getProject: userScript.GetProjectRequest<{
   projectConfig: ApifoxProjectConfig;
 }> = async (params, context) => {
   const { projectConfig } = params;
+
+  if(!projectConfig?.mockPrefixUrl) throw new Error('project中必须配置mockPrefixUrl');
+
   const { data: members } =
     await context.fetchJSON<ApifoxQueryMembersOriginalResponse>(
       `${ApifoxBaseUrl}/api/v1/project-members`,
@@ -204,6 +207,8 @@ export const getApi: userScript.GetApiRequest<
   ApifoxApiResponse
 > = async (params, context) => {
   const { projectConfig, overviewApiResponse } = params;
+
+  if(!projectConfig?.mockPrefixUrl) throw new Error('project中必须配置mockPrefixUrl');
 
   const apiDetail =
     await context.fetchJSON<ApifoxQueryApiDetailOriginalResponse>(
