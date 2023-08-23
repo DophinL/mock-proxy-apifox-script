@@ -60,11 +60,19 @@ function jsonToUrlEncoded(jsonObj: Record<string, any>) {
     .join('&');
 }
 
-function makeRequestHeaders(projectConfig: ApifoxProjectConfig, teamConfig: TeamConfig) {
+function makeRequestHeaders(projectConfig: ApifoxProjectConfig, teamConfig: ApifoxTeamConfig) {
+  if(!teamConfig.accessToken) {
+    throw new Error('teamConfig中必配置accessToken');
+  }
+
+  if(!teamConfig.clientVersion) {
+    throw new Error('teamConfig中必配置clientVersion');
+  }
+
   return {
     "X-Project-Id": `${projectConfig.id}`,
-    Authorization: teamConfig?.accessToken!,
-    "X-Client-Version": projectConfig?.clientVersion!,
+    Authorization: teamConfig.accessToken,
+    "X-Client-Version": teamConfig.clientVersion,
   };
 }
 
@@ -79,10 +87,16 @@ interface RequestMap {
   [path: string]: string;
 }
 
+interface ApifoxTeamConfig extends TeamConfig {
+  // 请求的Authorization Header字段
+  accessToken: string;
+  // apifox的客户端版本
+  clientVersion: string;
+}
+
 interface ApifoxProjectConfig extends ProjectConfig {
   requestMap?: RequestMap;
   mockPrefixUrl?: string;
-  clientVersion?: string;
 }
 
 interface ApifoxOverviewApiResponse extends OverviewApiResponse {}
@@ -103,14 +117,14 @@ export const getProject: userScript.GetProjectRequest<{
     await context.fetchJSON<ApifoxQueryMembersOriginalResponse>(
       `${ApifoxBaseUrl}/api/v1/project-members`,
       {
-        headers: makeRequestHeaders(projectConfig, context.teamConfig),
+        headers: makeRequestHeaders(projectConfig, context.teamConfig as ApifoxTeamConfig),
       }
     );
 
   const res = await context.fetchJSON<ApifoxOriginalQueryProjectResponse>(
     `${ApifoxBaseUrl}/api/v1/api-tree-list`,
     {
-      headers: makeRequestHeaders(projectConfig, context.teamConfig),
+      headers: makeRequestHeaders(projectConfig, context.teamConfig as ApifoxTeamConfig),
     }
   );
 
@@ -195,14 +209,14 @@ export const getApi: userScript.GetApiRequest<
     await context.fetchJSON<ApifoxQueryApiDetailOriginalResponse>(
       `${ApifoxBaseUrl}/api/v1/api-details/${overviewApiResponse.id}`,
       {
-        headers: makeRequestHeaders(projectConfig, context.teamConfig),
+        headers: makeRequestHeaders(projectConfig, context.teamConfig as ApifoxTeamConfig),
       }
     );
 
   const mocks = await context.fetchJSON<ApifoxQueryApiScenesOriginalResponse>(
     `${ApifoxBaseUrl}/api/v1/api-mocks`,
     {
-      headers: makeRequestHeaders(projectConfig, context.teamConfig),
+      headers: makeRequestHeaders(projectConfig, context.teamConfig as ApifoxTeamConfig),
     }
   );
 
@@ -298,7 +312,7 @@ export const addApiScene: userScript.AddApiSceneRequest<
         method: "POST",
         body: jsonToUrlEncoded(payload),
         headers: {
-          ...makeRequestHeaders(projectConfig, context.teamConfig),
+          ...makeRequestHeaders(projectConfig, context.teamConfig as ApifoxTeamConfig),
           "Content-Type": "application/x-www-form-urlencoded",
         },
       }
@@ -341,7 +355,7 @@ export const updateApiScene: userScript.UpdateApiSceneRequest<
       method: "PUT",
       body: jsonToUrlEncoded(payload),
       headers: {
-        ...makeRequestHeaders(projectConfig, context.teamConfig),
+        ...makeRequestHeaders(projectConfig, context.teamConfig as ApifoxTeamConfig),
         "Content-Type": "application/x-www-form-urlencoded",
       },
     }
@@ -362,7 +376,7 @@ export const deleteApiScene: userScript.DeleteApiSceneRequest<
     `${ApifoxBaseUrl}/api/v1/api-mocks/${sceneResponse.realSceneId}`,
     {
       method: "DELETE",
-      headers: makeRequestHeaders(projectConfig, context.teamConfig),
+      headers: makeRequestHeaders(projectConfig, context.teamConfig as ApifoxTeamConfig),
     }
   );
 };
